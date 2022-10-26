@@ -48,9 +48,9 @@ Extended with five colorful log methods:
  - `hey` - yellow-colored, analogue of `console.warn`
  - `no` - red-colored, analogue of `console.error`
 
-Despite some commands are marked as analogues, ***they are all still logging to the same level as `console.log` does***. This is due to only `console.log` supports color customizations.
+Despite some methods are marked as analogues, ***they are all still logging to the same level as `console.log` does***. This is due to only `console.log` supports color customizations.
 
-Each of the extension's commands takes infinite number of parameters.
+Each method takes infinite number of parameters.
 First parameter should be a string - this is the log message that will be colorfully customized. Other params will be logged as is.
 
 Here is how custom logs look like in the browser console:  
