@@ -1,6 +1,6 @@
 {
   "name": "@sounds.of.limbo/extensions",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Useful extensions for basic JS prototypes",
   "main": "dist/index.js",
   "scripts": {
