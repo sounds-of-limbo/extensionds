@@ -21,18 +21,18 @@ import React from "react"
 import "@sounds.of.limbo/dist/Console"
 
 export default class App extends React.Component {
-	componentDidMount() {
-		console.ok("Application *has been mounted*!")
-	}
+    componentDidMount() {
+        console.ok("Application *has been mounted*!")
+    }
 
-	render() {
-		console.say("Application is being rendered")
-		return <main>
-			<h1>
-				Hello, world!
-			</h1>
-		</main>
-	}
+    render() {
+        console.say("Application is being rendered")
+        return <main>
+            <h1>
+                Hello, world!
+            </h1>
+        </main>
+    }
 }
 ```
 
