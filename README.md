@@ -53,6 +53,8 @@ Despite some methods are marked as analogues, ***they are all still logging to t
 Each method takes infinite number of parameters.
 First parameter should be a string - this is the log message that will be colorfully customized. Other params will be logged as is.
 
+You can make parts of the message to be written using **bold** font. To do this, just conclude desired part of message in asterisks (\*) (see screenshots below).
+
 Here is how custom logs look like in the browser console:  
 ![console demo web](./static/images/console_demo_web.png)
 
