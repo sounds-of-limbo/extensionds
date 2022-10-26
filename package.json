@@ -9,7 +9,7 @@
     "publish:patch": "npm run build && npm version patch && npm run pub_n_go",
     "publish:minor": "npm run build && npm version minor && npm run pub_n_go",
     "publish:major": "npm run build && npm version major && npm run pub_n_go",
-    "pub_n_go": "npm publish && git add . && git commit -m \"Version $(npm pkg get version | tr -d '\"') published\" && git push && git tag \"v$(npm pkg get version | tr -d '\"')\" && npm push --tags"
+    "pub_n_go": "npm publish --access public && git push && npm push --tags"
   },
   "repository": {
     "type": "git",
