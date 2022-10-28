@@ -25,7 +25,7 @@ npm install @sounds.of.limbo/extensions
 
 ## Basic usage
 To apply specific prototype extension, you have to `import` corresponding file at some point of you application:
-```typescript
+```tsx
 // Assuming some React application
 import React from "react"
 import "@sounds.of.limbo/dist/Console"
@@ -52,11 +52,11 @@ Note that since corresponding file will be imported, extended prototype will be 
 
 ### `Console`
 Extended with five colorful log methods:
- - `say` - cyan-colored, analogue of `console.log`
- - `nfo` - blue-colored, analogue of `console.info`
- - `ok` - lime-colored. Does not have analogues among basic console method. Typically being used for logging some success messages.
- - `hey` - yellow-colored, analogue of `console.warn`
- - `no` - red-colored, analogue of `console.error`
+ - `say` - <span style="color:cyan;background:black;"> **cyan-colored** </span>, analogue of `console.log`
+ - `nfo` - <span style="color:blue;background:black;"> **blue-colored** </span>, analogue of `console.info`
+ - `ok` - <span style="color:lime;background:black;"> **lime-colored** </span>. Does not have analogues among basic console method. Typically being used for logging some success messages.
+ - `hey` - <span style="color:yellow;background:black;"> **yellow-colored** </span>, analogue of `console.warn`
+ - `no` - <span style="color:red;background:black;"> **red-colored** </span>, analogue of `console.error`
 
 Despite some methods are marked as analogues, ***they are all still logging to the same level as `console.log` does***. This is due to only `console.log` supports color customizations.
 
@@ -87,6 +87,8 @@ padStart(maxLength: number, padWith?: string) => string
 | `maxLength` | `number` | **YES** |  | Maximum length of the resulting string |
 | `padWith` | `string` | - | `"0"` | String to pad the initial string with |
 
+---
+
 #### `limit`
 Limit current number to min and max values.
 ```typescript
@@ -106,6 +108,8 @@ Examples:
 | `min` | `number` | **YES** |  | Minimum to limit value to |
 | `max` | `number` | **YES** |  | Maximum to limit value to |
 
+---
+
 #### `formatThousands`
 Places spaces each 3 numbers
 ```typescript
@@ -117,6 +121,8 @@ Examples:
 (1000).formatThousands() // => "1 000"
 (12345.6789).formatThousands() // => "12 345.6789"
 ```
+
+---
 
 #### `pluralize`
 Use value to create pluralized string
@@ -136,6 +142,8 @@ Examples:
 | `pluralForm` | `string` | **YES** |  | Plural form of the word to be pluralized |
 | `toFixed` | `number` | - | `-1` | If the provided value is a number greater than or equal to 0, `Number.prototype.toFixed` will be applied to the number |
 
+---
+
 #### `asBytesToVerboseSize`
 Treat value as bytes and return verbose siez string up to terabytes (TB)
 ```typescript
@@ -151,6 +159,8 @@ Examples:
 | Argument | Type | Required? | Default value | Description |
 | - | - | - | - | - |
 | `customSizeNames` | [`SizeNames`](#sizenames) | - |  | Size names customizations |
+
+---
 
 #### `asSecondsToTime`
 Treat value as seconds and return time string
@@ -170,6 +180,8 @@ Examples:
 | - | - | - | - | - |
 | `separateDays` | `boolean` | - | `false` | If there is more than 24 hours, whether there should be extra "days" label at the start or not. |
 
+---
+
 #### `asSecondsToVerboseTime`
 Treat number as seconds and return verbose time string.
 ```typescript
@@ -182,6 +194,8 @@ Examples:
 (3915).asSecondsToTime() // => "1 h 5 min 15 sec"
 (90088).asSecondsToTime() // => "25 h 1 min 28 sec"
 ```
+
+---
 
 ## Helper types
 
