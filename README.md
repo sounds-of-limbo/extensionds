@@ -1,4 +1,8 @@
 # @sounds.of.limbo/extensions
+[![https://nodei.co/npm/@sounds.of.limbo/extensions.png?downloads=true&downloadRank=true&stars=true](https://nodei.co/npm/@sounds.of.limbo/extensions.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/@sounds.of.limbo/extensions)
+
+[![npm version](https://badge.fury.io/js/@sounds.of.limbo%2Fextensions.svg)](https://badge.fury.io/js/@sounds.of.limbo%2Fextensions)
+
 Useful extensions for basic JS prototypes
 
 ## Table of Contents
