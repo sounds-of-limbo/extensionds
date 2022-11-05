@@ -32,7 +32,7 @@ To apply specific prototype extension, you have to `import` corresponding file a
 ```tsx
 // Assuming some React application
 import React from "react"
-import "@sounds.of.limbo/dist/Console"
+import "@sounds.of.limbo/extensions/dist/Console"
 
 export default class App extends React.Component {
     componentDidMount() {
