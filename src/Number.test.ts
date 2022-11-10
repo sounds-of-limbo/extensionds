@@ -345,302 +345,429 @@ describe("Prototype extensions: Number", () => {
 		})
 	})
 
-	describe("asBytesToVerboseSize()", () => {
-		const tests: {
-			value: number
-			customSizeNames?: SizeNames
-			expected: string
-		}[] = [
-			{
-				value: 0,
-				expected: "0 bytes",
-			},
-			{
-				value: 1,
-				expected: "1 byte",
-			},
-			{
-				value: 123,
-				expected: "123 bytes",
-			},
-			{
-				value: 1234,
-				expected: "1.21 kB",
-			},
-			{
-				value: 12345,
-				expected: "12.06 kB",
-			},
-			{
-				value: 123456,
-				expected: "120.56 kB",
-			},
-			{
-				value: 1234567,
-				expected: "1.18 MB",
-			},
-			{
-				value: 12345678,
-				expected: "11.77 MB",
-			},
-			{
-				value: 123456789,
-				expected: "117.74 MB",
-			},
-			{
-				value: 1234567890,
-				expected: "1.15 GB",
-			},
-			{
-				value: 1024 ** 4,
-				expected: "1 TB",
-			},
-			{
-				value: 1024 ** 4 * 1.45,
-				expected: "1.45 TB",
-			},
-			{
-				value: 1,
-				customSizeNames: {
-					bytes: ["BYTE", "BYTES"],
-				},
-				expected: "1 BYTE",
-			},
-			{
-				value: 2,
-				customSizeNames: {
-					bytes: ["BYTE", "BYTES"],
-				},
-				expected: "2 BYTES",
-			},
-			{
-				value: 1024,
-				customSizeNames: {
-					kilobytes: ["kbyte", "kbytes"],
-				},
-				expected: "1 kbyte",
-			},
-			{
-				value: 1024 * 1.2,
-				customSizeNames: {
-					kilobytes: ["kbyte", "kbytes"],
-				},
-				expected: "1.2 kbytes",
-			},
-			{
-				value: 1024 * 1024,
-				customSizeNames: {
-					megabytes: ["Mbyte", "Mbytes"],
-				},
-				expected: "1 Mbyte",
-			},
-			{
-				value: 1024 * 1024 * 1.223,
-				customSizeNames: {
-					megabytes: ["Mbyte", "Mbytes"],
-				},
-				expected: "1.22 Mbytes",
-			},
-			{
-				value: 1024 * 1024 * 1024,
-				customSizeNames: {
-					gigabytes: ["Gbyte", "Gbytes"],
-				},
-				expected: "1 Gbyte",
-			},
-			{
-				value: 1024 * 1024 * 1024 * 1.228,
-				customSizeNames: {
-					gigabytes: ["Gbyte", "Gbytes"],
-				},
-				expected: "1.23 Gbytes",
-			},
-			{
-				value: 1024 ** 4,
-				customSizeNames: {
-					terabytes: ["Tbyte", "Tbytes"],
-				},
-				expected: "1 Tbyte",
-			},
-			{
-				value: 1024 ** 4 * 1.45,
-				customSizeNames: {
-					terabytes: ["Tbyte", "Tbytes"],
-				},
-				expected: "1.45 Tbytes",
-			},
-		]
+	describe("as()", () => {
+		describe("Size units", () => {
+			describe("to()", () => {
+				const KS = 1024
+				const multipliers: {
+					[key in SOLSizeUnit]: {
+						[key in SOLSizeUnit]: number
+					}
+				} = {
+					bytes: {
+						bytes: 1,
+						kilobytes: KS,
+						megabytes: KS ** 2,
+						gigabytes: KS ** 3,
+						terabytes: KS ** 4,
+					},
+					kilobytes: {
+						bytes: 1 / KS,
+						kilobytes: 1,
+						megabytes: 1024,
+						gigabytes: 1024 ** 2,
+						terabytes: 1024 ** 3,
+					},
+					megabytes: {
+						bytes: 1 / (KS ** 2),
+						kilobytes: 1 / KS,
+						megabytes: 1,
+						gigabytes: 1024,
+						terabytes: 1024 ** 2,
+					},
+					gigabytes: {
+						bytes: 1 / (KS ** 3),
+						kilobytes: 1 / (KS ** 2),
+						megabytes: 1 / KS,
+						gigabytes: 1,
+						terabytes: 1 * KS,
+					},
+					terabytes: {
+						bytes: 1 / (KS ** 4),
+						kilobytes: 1 / (KS ** 3),
+						megabytes: 1 / (KS ** 2),
+						gigabytes: 1 / KS,
+						terabytes: 1,
+					},
+				}
 
-		tests.forEach((test, i) => {
-			const { value, expected } = test
-			it(`Case ${i + 1}, ${value} byte(s)`, done => {
-				should(value.asBytesToVerboseSize(test.customSizeNames))
-					.be.exactly(expected)
+				const values = [0.1, 0.125, 0.5, 1, 10, 512, 1024, 2048]
 
-				done()
+				values.forEach((value, i) => {
+					(Object.keys(multipliers) as SOLSizeUnit[]).forEach((from, j, keys) => {
+						(Object.keys(multipliers[from]) as SOLSizeUnit[]).forEach((to, k) => {
+							const expected = value / multipliers[from][to]
+							it(`Case #${values.length * keys.length * i + keys.length * j + k + 1}: ${value} ${from} to ${to} to be ${expected}`, done => {
+								should(value.as(from).to(to))
+									.be.exactly(expected)
+
+								done()
+							})
+						})
+					})
+				})
+			})
+
+			describe("toVerboseString()", () => {
+				const tests: {
+					value: number
+					as: SOLSizeUnit,
+					customSizeNames?: SOLSizeNames
+					expected: string
+				}[] = [
+					{
+						value: 0,
+						as: "bytes",
+						expected: "0 bytes",
+					},
+					{
+						value: 0,
+						as: "megabytes",
+						expected: "0 bytes",
+					},
+					{
+						value: 0,
+						as: "gigabytes",
+						expected: "0 bytes",
+					},
+					{
+						value: 0,
+						as: "terabytes",
+						expected: "0 bytes",
+					},
+					{
+						value: 1,
+						as: "bytes",
+						expected: "1 byte",
+					},
+					{
+						value: 1,
+						as: "kilobytes",
+						expected: "1 kB",
+					},
+					{
+						value: 1,
+						as: "megabytes",
+						expected: "1 MB",
+					},
+					{
+						value: 1,
+						as: "gigabytes",
+						expected: "1 GB",
+					},
+					{
+						value: 1,
+						as: "terabytes",
+						expected: "1 TB",
+					},
+					{
+						value: 0.5,
+						as: "bytes",
+						expected: "0.5 bytes",
+					},
+					{
+						value: 0.5,
+						as: "kilobytes",
+						expected: "512 bytes",
+					},
+					{
+						value: 0.5,
+						as: "megabytes",
+						expected: "512 kB",
+					},
+					{
+						value: 0.5,
+						as: "gigabytes",
+						expected: "512 MB",
+					},
+					{
+						value: 0.5,
+						as: "terabytes",
+						expected: "512 GB",
+					},
+					{
+						value: 123,
+						as: "bytes",
+						expected: "123 bytes",
+					},
+					{
+						value: 1234,
+						as: "bytes",
+						expected: "1.21 kB",
+					},
+					{
+						value: 12345,
+						as: "bytes",
+						expected: "12.06 kB",
+					},
+					{
+						value: 123456,
+						as: "bytes",
+						expected: "120.56 kB",
+					},
+					{
+						value: 1234567,
+						as: "bytes",
+						expected: "1.18 MB",
+					},
+					{
+						value: 12345678,
+						as: "bytes",
+						expected: "11.77 MB",
+					},
+					{
+						value: 123456789,
+						as: "bytes",
+						expected: "117.74 MB",
+					},
+					{
+						value: 1234567890,
+						as: "bytes",
+						expected: "1.15 GB",
+					},
+					{
+						value: 1024 ** 4,
+						as: "bytes",
+						expected: "1 TB",
+					},
+					{
+						value: 1024 ** 4 * 1.45,
+						as: "bytes",
+						expected: "1.45 TB",
+					},
+					{
+						value: 1,
+						as: "bytes",
+						customSizeNames: {
+							bytes: ["BYTE", "BYTES"],
+						},
+						expected: "1 BYTE",
+					},
+					{
+						value: 2,
+						as: "bytes",
+						customSizeNames: {
+							bytes: ["BYTE", "BYTES"],
+						},
+						expected: "2 BYTES",
+					},
+					{
+						value: 1024,
+						as: "bytes",
+						customSizeNames: {
+							kilobytes: ["kbyte", "kbytes"],
+						},
+						expected: "1 kbyte",
+					},
+					{
+						value: 1024 * 1.2,
+						as: "bytes",
+						customSizeNames: {
+							kilobytes: ["kbyte", "kbytes"],
+						},
+						expected: "1.2 kbytes",
+					},
+					{
+						value: 1024 * 1024,
+						as: "bytes",
+						customSizeNames: {
+							megabytes: ["Mbyte", "Mbytes"],
+						},
+						expected: "1 Mbyte",
+					},
+					{
+						value: 1024 * 1024 * 1.223,
+						as: "bytes",
+						customSizeNames: {
+							megabytes: ["Mbyte", "Mbytes"],
+						},
+						expected: "1.22 Mbytes",
+					},
+					{
+						value: 1024 * 1024 * 1024,
+						as: "bytes",
+						customSizeNames: {
+							gigabytes: ["Gbyte", "Gbytes"],
+						},
+						expected: "1 Gbyte",
+					},
+					{
+						value: 1024 * 1024 * 1024 * 1.228,
+						as: "bytes",
+						customSizeNames: {
+							gigabytes: ["Gbyte", "Gbytes"],
+						},
+						expected: "1.23 Gbytes",
+					},
+					{
+						value: 1024 ** 4,
+						as: "bytes",
+						customSizeNames: {
+							terabytes: ["Tbyte", "Tbytes"],
+						},
+						expected: "1 Tbyte",
+					},
+					{
+						value: 1024 ** 4 * 1.45,
+						as: "bytes",
+						customSizeNames: {
+							terabytes: ["Tbyte", "Tbytes"],
+						},
+						expected: "1.45 Tbytes",
+					},
+				]
+
+				tests.forEach((test, i) => {
+					it(`Case #${i + 1}: ${test.value} ${test.as}`, done => {
+						should(test.value.as(test.as).toVerboseString(test.customSizeNames))
+							.be.exactly(test.expected)
+
+						done()
+					})
+				})
 			})
 		})
-	})
 
-	describe("asSecondsToTime()", () => {
-		const tests: {
-			value: number
-			expected: string
-			separateDays?: boolean
-		}[] = [
-			{
-				value: -68,
-				expected: "-01:08",
-			},
-			{
-				value: -1,
-				expected: "-00:01",
-			},
-			{
-				value: 0,
-				expected: "00:00",
-			},
-			{
-				value: 42,
-				expected: "00:42",
-			},
-			{
-				value: 93,
-				expected: "01:33",
-			},
-			{
-				value: 134,
-				expected: "02:14",
-			},
-			{
-				value: 300,
-				expected: "05:00",
-			},
-			{
-				value: 300 * 5 + 59,
-				expected: "25:59"
-			},
-			{
-				value: 3600,
-				expected: "1:00:00",
-			},
-			{
-				value: 3915,
-				expected: "1:05:15",
-			},
-			{
-				value: 3600 * 23 + 69,
-				expected: "23:01:09",
-			},
-			{
-				value: 3600 * 24 + 69,
-				expected: "24:01:09",
-			},
-			{
-				value: 3600 * 25 + 88,
-				expected: "25:01:28",
-			},
+		describe("Time units", () => {
+			describe("to()", () => {
+				const multipliers: {
+					[key in SOLTimeUnit]: {
+						[key in SOLTimeUnit]: number
+					}
+				} = {
+					seconds: {
+						seconds: 1,
+						minutes: 60,
+						hours: 60 ** 2,
+						days: 60 ** 2 * 24,
+					},
+					minutes: {
+						seconds: 1 / 60,
+						minutes: 1,
+						hours: 60,
+						days: 60 * 24,
+					},
+					hours: {
+						seconds: 1 / 60 ** 2,
+						minutes: 1 / 60,
+						hours: 1,
+						days: 24,
+					},
+					days: {
+						seconds: 1 / (60 ** 2 * 24),
+						minutes: 1 / (60 * 24),
+						hours: 1 / 24,
+						days: 1,
+					},
+				}
 
+				const values = [0.1, 1 / 3, 0.5, 1, 10, 60, 120]
 
-			{
-				value: 3600 * 23 + 69,
-				expected: "23:01:09",
-				separateDays: true,
-			},
-			{
-				value: 3600 * 24 + 69,
-				expected: "1 day 00:01:09",
-				separateDays: true,
-			},
-			{
-				value: 3600 * 25 + 88,
-				expected: "1 day 01:01:28",
-				separateDays: true,
-			},
-			{
-				value: 3600 * 50 + 88,
-				expected: "2 days 02:01:28",
-				separateDays: true,
-			},
-		]
+				values.forEach((value, i) => {
+					(Object.keys(multipliers) as SOLTimeUnit[]).forEach((from, j, keys) => {
+						(Object.keys(multipliers[from]) as SOLTimeUnit[]).forEach((to, k) => {
+							const expected = (value / multipliers[from][to]).toFixed(5)
+							it(`Case #${values.length * keys.length * i + keys.length * j + k + 1}: ${value} ${from} to ${to} to be ${Number(expected)}`, done => {
+								should(value.as(from).to(to).toFixed(5))
+									.be.exactly(expected)
 
-		tests.forEach((test, i) => {
-			const { value, expected, separateDays } = test
-			it(`Case ${i + 1}, ${value} second(s)`, done => {
-				should(value.asSecondsToTime(separateDays))
-					.be.exactly(expected)
-
-				done()
+								done()
+							})
+						})
+					})
+				})
 			})
-		})
-	})
 
-	describe("asSecondsToVerboseTime()", () => {
-		const tests: {
-			value: number
-			expected: string
-		}[] = [
-			{
-				value: -68,
-				expected: "-1 min 8 sec",
-			},
-			{
-				value: -1,
-				expected: "-1 sec",
-			},
-			{
-				value: 0,
-				expected: "0 sec",
-			},
-			{
-				value: 42,
-				expected: "42 sec",
-			},
-			{
-				value: 93,
-				expected: "1 min 33 sec",
-			},
-			{
-				value: 134,
-				expected: "2 min 14 sec",
-			},
-			{
-				value: 300,
-				expected: "5 min",
-			},
-			{
-				value: 300 * 5 + 59,
-				expected: "25 min 59 sec"
-			},
-			{
-				value: 3600,
-				expected: "1 h",
-			},
-			{
-				value: 3915,
-				expected: "1 h 5 min 15 sec",
-			},
-			{
-				value: 3600 * 23 + 69,
-				expected: "23 h 1 min 9 sec",
-			},
-			{
-				value: 3600 * 24 + 69,
-				expected: "24 h 1 min 9 sec",
-			},
-			{
-				value: 3600 * 25 + 88,
-				expected: "25 h 1 min 28 sec",
-			}
-		]
+			describe("toTimeString()", () => {
+				const tests: {
+					value: number
+					expected: string
+					separateDays?: boolean
+				}[] = [
+					{
+						value: -68,
+						expected: "-01:08",
+					},
+					{
+						value: -1,
+						expected: "-00:01",
+					},
+					{
+						value: 0,
+						expected: "00:00",
+					},
+					{
+						value: 42,
+						expected: "00:42",
+					},
+					{
+						value: 93,
+						expected: "01:33",
+					},
+					{
+						value: 134,
+						expected: "02:14",
+					},
+					{
+						value: 300,
+						expected: "05:00",
+					},
+					{
+						value: 300 * 5 + 59,
+						expected: "25:59"
+					},
+					{
+						value: 3600,
+						expected: "1:00:00",
+					},
+					{
+						value: 3915,
+						expected: "1:05:15",
+					},
+					{
+						value: 3600 * 23 + 69,
+						expected: "23:01:09",
+					},
+					{
+						value: 3600 * 24 + 69,
+						expected: "24:01:09",
+					},
+					{
+						value: 3600 * 25 + 88,
+						expected: "25:01:28",
+					},
+		
+		
+					{
+						value: 3600 * 23 + 69,
+						expected: "23:01:09",
+						separateDays: true,
+					},
+					{
+						value: 3600 * 24 + 69,
+						expected: "1 day 00:01:09",
+						separateDays: true,
+					},
+					{
+						value: 3600 * 25 + 88,
+						expected: "1 day 01:01:28",
+						separateDays: true,
+					},
+					{
+						value: 3600 * 50 + 88,
+						expected: "2 days 02:01:28",
+						separateDays: true,
+					},
+				]
 
-		tests.forEach((test, i) => {
-			const { value, expected } = test
-			it(`Case ${i + 1}, ${value} second(s)`, done => {
-				should(value.asSecondsToVerboseTime())
-					.be.exactly(expected)
+				tests.forEach((test, i) => {
+					it(`Case #${i + 1}: ${test.value} seconds${test.separateDays ? " (separate days)" : ""} to be ${test.expected}`, done => {
+						should(test.value.as("seconds").toTimeString(test.separateDays))
+							.be.exactly(test.expected)
 
-				done()
+						done()
+					})
+				})
 			})
 		})
 	})
