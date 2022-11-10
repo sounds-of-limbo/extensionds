@@ -23,6 +23,87 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
+var SOLTime = /** @class */ (function () {
+    function SOLTime(value, unit) {
+        var _this = this;
+        this.unitMultipliers = {
+            seconds: 1,
+            minutes: 60,
+            hours: 3600,
+            days: 86400,
+        };
+        /**
+         * Convert time value from current to target time unit
+         */
+        this.to = function (unit) {
+            return _this.seconds / _this.unitMultipliers[unit];
+        };
+        /**
+         * Make time string. For example:
+         * **00:42**
+         * **04:20**
+         * **1:15:01**
+         */
+        this.toTimeString = function (
+        /**
+         * If there is more than 24 hours, whether there should be extra 'days' label at the start or not.
+         * Default: `false`
+         */
+        separateDays) {
+            var prependSign = _this.seconds < 0 ? "-" : "";
+            var seconds = Math.abs(_this.seconds).as("seconds");
+            var absSeconds = (seconds.to("seconds") | 0) % 60;
+            var absMinutes = (seconds.to("minutes") | 0) % 60;
+            var hours = seconds.to("hours") | 0;
+            var days = seconds.to("days") | 0;
+            return prependSign + "".concat(separateDays && days ? "".concat(days.pluralize("day", "days"), " ") : "").concat(hours || separateDays ? "".concat(separateDays ? (hours % 24).padStart(2) : hours, ":") : "").concat(absMinutes.padStart(2), ":").concat(absSeconds.padStart(2));
+        };
+        this.seconds = value * this.unitMultipliers[unit];
+    }
+    return SOLTime;
+}());
+var SOLSize = /** @class */ (function () {
+    function SOLSize(value, unit) {
+        var _this = this;
+        this.unitMultipliers = {
+            bytes: 1,
+            kilobytes: 1024,
+            megabytes: Math.pow(1024, 2),
+            gigabytes: Math.pow(1024, 3),
+            terabytes: Math.pow(1024, 4),
+        };
+        /**
+         * Convert size from current to target size unit
+         */
+        this.to = function (unit) {
+            return _this.bytes / _this.unitMultipliers[unit];
+        };
+        /**
+         * Make verbose size string up to terabytes (TB). For example:
+         * **921 bytes**
+         * **128 kB**
+         * **1.2 MB**
+         * **12.28 GB**
+         * **1.2 TB**
+         */
+        this.toVerboseString = function (customSizeNames) {
+            var _a, _b, _c, _d, _e;
+            var _f = customSizeNames || {}, _g = _f.bytes, bytesLabels = _g === void 0 ? ["byte", "bytes"] : _g, _h = _f.kilobytes, kilobytesLabels = _h === void 0 ? ["kB", "kB"] : _h, _j = _f.megabytes, megabytesLabels = _j === void 0 ? ["MB", "MB"] : _j, _k = _f.gigabytes, gigabytesLabels = _k === void 0 ? ["GB", "GB"] : _k, _l = _f.terabytes, terabytesLabels = _l === void 0 ? ["TB", "TB"] : _l;
+            var _m = _this.unitMultipliers, kilobytes = _m.kilobytes, megabytes = _m.megabytes, gigabytes = _m.gigabytes, terabytes = _m.terabytes;
+            if (_this.bytes >= terabytes)
+                return (_a = (_this.bytes / terabytes)).pluralize.apply(_a, __spreadArray(__spreadArray([], __read(terabytesLabels), false), [2], false));
+            if (_this.bytes >= gigabytes)
+                return (_b = (_this.bytes / gigabytes)).pluralize.apply(_b, __spreadArray(__spreadArray([], __read(gigabytesLabels), false), [2], false));
+            if (_this.bytes >= megabytes)
+                return (_c = (_this.bytes / megabytes)).pluralize.apply(_c, __spreadArray(__spreadArray([], __read(megabytesLabels), false), [2], false));
+            if (_this.bytes >= kilobytes)
+                return (_d = (_this.bytes / kilobytes)).pluralize.apply(_d, __spreadArray(__spreadArray([], __read(kilobytesLabels), false), [2], false));
+            return (_e = _this.bytes).pluralize.apply(_e, __spreadArray([], __read(bytesLabels), false));
+        };
+        this.bytes = value * this.unitMultipliers[unit];
+    }
+    return SOLSize;
+}());
 Number.prototype.padStart = function (maxLength, padWith) {
     if (padWith === void 0) { padWith = "0"; }
     return "".concat(this).padStart(maxLength, padWith);
@@ -54,41 +135,17 @@ Number.prototype.pluralize = function (singularForm, pluralForm, toFixed) {
         ? "".concat(formattedSelf, " ").concat(singularForm)
         : "".concat(formattedSelf, " ").concat(pluralForm);
 };
-Number.prototype.asBytesToVerboseSize = function (customSizeNames) {
+Number.prototype.as = function (unit) {
     var self = Number(this);
-    var _a = customSizeNames || {}, _b = _a.bytes, bytes = _b === void 0 ? ["byte", "bytes"] : _b, _c = _a.kilobytes, kilobytes = _c === void 0 ? ["kB", "kB"] : _c, _d = _a.megabytes, megabytes = _d === void 0 ? ["MB", "MB"] : _d, _e = _a.gigabytes, gigabytes = _e === void 0 ? ["GB", "GB"] : _e, _f = _a.terabytes, terabytes = _f === void 0 ? ["TB", "TB"] : _f;
-    var kb = self / 1024;
-    var mb = kb / 1024;
-    var gb = mb / 1024;
-    var tb = gb / 1024;
-    return tb >= 1
-        ? tb.pluralize.apply(tb, __spreadArray(__spreadArray([], __read(terabytes), false), [2], false)) : gb >= 1
-        ? gb.pluralize.apply(gb, __spreadArray(__spreadArray([], __read(gigabytes), false), [2], false)) : mb >= 1
-        ? mb.pluralize.apply(mb, __spreadArray(__spreadArray([], __read(megabytes), false), [2], false)) : kb >= 1
-        ? kb.pluralize.apply(kb, __spreadArray(__spreadArray([], __read(kilobytes), false), [2], false)) : self.pluralize.apply(self, __spreadArray([], __read(bytes), false));
-};
-Number.prototype.asSecondsToTime = function (separateDays) {
-    if (separateDays === void 0) { separateDays = false; }
-    var self = Number(this);
-    var abs = self < 0 ? -self : self;
-    var prependSign = self < 0 ? "-" : "";
-    var seconds = abs | 0;
-    var absSeconds = seconds % 60;
-    var absMinutes = (seconds / 60 | 0) % 60;
-    var hours = seconds / 60 / 60 | 0;
-    var days = 0;
-    if (separateDays) {
-        days = hours / 24 | 0;
-        hours = hours % 24;
+    switch (unit) {
+        case "bytes":
+        case "kilobytes":
+        case "megabytes":
+        case "gigabytes":
+        case "terabytes":
+            return new SOLSize(self, unit); // TODO 'as any' is a workaround - see https://github.com/microsoft/TypeScript/issues/24929
+        default:
+            return new SOLTime(self, unit);
     }
-    return prependSign + "".concat(separateDays && days ? "".concat(days, " day").concat(days == 1 ? "" : "s", " ") : "").concat(hours || separateDays ? "".concat(separateDays ? hours.padStart(2) : hours, ":") : "").concat(absMinutes.padStart(2), ":").concat(absSeconds.padStart(2));
-};
-Number.prototype.asSecondsToVerboseTime = function () {
-    var self = Number(this);
-    var prependSign = self < 0 ? "-" : "";
-    var _a = __read(self.asSecondsToTime().split(":").reverse().map(Number).map(Math.abs), 3), s = _a[0], m = _a[1], _b = _a[2], h = _b === void 0 ? 0 : _b;
-    return prependSign + ((h ? "".concat(h, " h ") : "") +
-        (m ? "".concat(m, " min ") : "") +
-        (s ? "".concat(s, " sec ") : "")).trim() || "0 sec";
 };
 //# sourceMappingURL=Number.js.map

@@ -1,4 +1,4 @@
-interface SizeNames {
+interface SOLSizeNames {
 	/**
 	 * default is **byte, bytes**
 	 */
@@ -19,6 +19,151 @@ interface SizeNames {
 	 * default is **TB, TB**
 	 */
 	terabytes?: [string, string]
+}
+
+type SOLTimeUnit =
+	| "seconds"
+	| "minutes"
+	| "hours"
+	| "days"
+
+class SOLTime {
+	private unitMultipliers
+		: {
+			[key in SOLTimeUnit]: number
+		}
+		= {
+			seconds: 1,
+			minutes: 60,
+			hours: 3600,
+			days: 86400,
+		}
+
+	private seconds
+		: number
+		
+	constructor(
+		value: number,
+		unit: SOLTimeUnit,
+	) {
+		this.seconds = value * this.unitMultipliers[unit]
+	}
+
+	/**
+	 * Convert time value from current to target time unit
+	 */
+	to = (
+		unit: SOLTimeUnit,
+	): number => {
+		return this.seconds / this.unitMultipliers[unit]
+	}
+
+	/**
+	 * Make time string. For example:  
+	 * **00:42**  
+	 * **04:20**  
+	 * **1:15:01**  
+	 */
+	toTimeString = (
+		/**
+		 * If there is more than 24 hours, whether there should be extra 'days' label at the start or not.  
+		 * Default: `false`
+		 */
+		separateDays?: boolean
+	): string => {
+		const prependSign = this.seconds < 0 ? "-" : ""
+
+		const seconds = Math.abs(this.seconds).as("seconds")
+		const absSeconds = (seconds.to("seconds") | 0) % 60
+		const absMinutes = (seconds.to("minutes") | 0) % 60
+
+		const hours = seconds.to("hours") | 0
+		const days = seconds.to("days") | 0
+
+		return prependSign + `${
+			separateDays && days ? `${days.pluralize("day", "days")} ` : ""}${
+			hours || separateDays ? `${separateDays ? (hours % 24).padStart(2) : hours}:` : "" }${
+			absMinutes.padStart(2) }:${
+			absSeconds.padStart(2)
+		}`
+	}
+}
+
+type SOLSizeUnit =
+	| "bytes"
+	| "kilobytes"
+	| "megabytes"
+	| "gigabytes"
+	| "terabytes"
+
+class SOLSize {
+	private unitMultipliers
+		: {
+			[key in SOLSizeUnit]: number
+		}
+		= {
+			bytes: 1,
+			kilobytes: 1024,
+			megabytes: 1024 ** 2,
+			gigabytes: 1024 ** 3,
+			terabytes: 1024 ** 4,
+		}
+
+	private bytes
+		: number
+		
+	constructor(
+		value: number,
+		unit: SOLSizeUnit,
+	) {
+		this.bytes = value * this.unitMultipliers[unit]
+	}
+
+	/**
+	 * Convert size from current to target size unit
+	 */
+	to = (
+		unit: SOLSizeUnit,
+	): number => {
+		return this.bytes / this.unitMultipliers[unit]
+	}
+
+	/**
+	 * Make verbose size string up to terabytes (TB). For example:  
+	 * **921 bytes**  
+	 * **128 kB**  
+	 * **1.2 MB**  
+	 * **12.28 GB**  
+	 * **1.2 TB**  
+	 */
+	toVerboseString = (
+		customSizeNames?: SOLSizeNames
+	): string => {
+		const {
+			bytes: bytesLabels = ["byte", "bytes"],
+			kilobytes: kilobytesLabels = ["kB", "kB"],
+			megabytes: megabytesLabels = ["MB", "MB"],
+			gigabytes: gigabytesLabels = ["GB", "GB"],
+			terabytes: terabytesLabels = ["TB", "TB"],
+		} = customSizeNames || {}
+
+		const {
+			kilobytes,
+			megabytes,
+			gigabytes,
+			terabytes,
+		} = this.unitMultipliers
+
+		if (this.bytes >= terabytes)
+			return (this.bytes / terabytes).pluralize(...terabytesLabels, 2)
+		if (this.bytes >= gigabytes)
+			return (this.bytes / gigabytes).pluralize(...gigabytesLabels, 2)
+		if (this.bytes >= megabytes)
+			return (this.bytes / megabytes).pluralize(...megabytesLabels, 2)
+		if (this.bytes >= kilobytes)
+			return (this.bytes / kilobytes).pluralize(...kilobytesLabels, 2)
+		return this.bytes.pluralize(...bytesLabels)
+	}
 }
 
 interface Number {
@@ -60,42 +205,9 @@ interface Number {
 		toFixed?: number,
 	) => string
 
-	/**
-	 * Treat number as bytes and return verbose size string up to terabytes (TB).  
-	 * For example:  
-	 * **921 bytes**  
-	 * **128 kB**  
-	 * **1.2 MB**  
-	 * **12.28 GB**  
-	 * **1.2 TB**  
-	 */
-	asBytesToVerboseSize: (
-		customSizeNames?: SizeNames
-	) => string
-
-	/**
-	 * Treat number as seconds and return time string.  
-	 * For example:  
-	 * **00:42**  
-	 * **04:20**  
-	 * **1:15:01**  
-	 */
-	asSecondsToTime: (
-		/**
-		 * If there is more than 24 hours, whether there should be extra 'days' label at the start or not.  
-		 * Default: `false`
-		 */
-		separateDays?: boolean
-	) => string
-
-	/**
-	 * Treat number as seconds and return verbose time string.  
-	 * For example:  
-	 * **42 sec**  
-	 * **4 min 20 sec**  
-	 * **1 h 15 min 1 sec**
-	 */
-	asSecondsToVerboseTime: () => string
+	as: <T extends SOLTimeUnit | SOLSizeUnit>(
+		unit: T
+	) => T extends SOLTimeUnit ? SOLTime : SOLSize
 }
 
 Number.prototype.padStart = function(
@@ -142,67 +254,18 @@ Number.prototype.pluralize = function(
 		: `${formattedSelf} ${pluralForm}`
 }
 
-Number.prototype.asBytesToVerboseSize = function(
-	customSizeNames?: SizeNames
+Number.prototype.as = function<T extends SOLTimeUnit | SOLSizeUnit>(
+	unit: T
 ) {
 	const self = Number(this)
-	const {
-		bytes = ["byte", "bytes"],
-		kilobytes = ["kB", "kB"],
-		megabytes = ["MB", "MB"],
-		gigabytes = ["GB", "GB"],
-		terabytes = ["TB", "TB"],
-	} = customSizeNames || {}
-
-	const kb = self / 1024
-	const mb = kb / 1024
-	const gb = mb / 1024
-	const tb = gb / 1024
-	return tb >= 1
-		? tb.pluralize(...terabytes, 2)
-		: gb >= 1
-			? gb.pluralize(...gigabytes, 2)
-			: mb >= 1
-				? mb.pluralize(...megabytes, 2)
-				: kb >= 1
-					? kb.pluralize(...kilobytes, 2)
-					: self.pluralize(...bytes)
-}
-
-Number.prototype.asSecondsToTime = function(
-	separateDays: boolean = false
-) {
-	const self = Number(this)
-	const abs = self < 0 ? -self : self
-	const prependSign = self < 0 ? "-" : ""
-
-	const seconds = abs | 0
-	const absSeconds = seconds % 60
-	const absMinutes = (seconds / 60 | 0) % 60
-
-	let hours = seconds / 60 / 60 | 0
-	let days: number = 0
-
-	if (separateDays) {
-		days = hours / 24 | 0
-		hours = hours % 24
+	switch (unit) {
+		case "bytes":
+		case "kilobytes":
+		case "megabytes":
+		case "gigabytes":
+		case "terabytes":
+			return new SOLSize(self, unit) as any // TODO 'as any' is a workaround - see https://github.com/microsoft/TypeScript/issues/24929
+		default:
+			return new SOLTime(self, unit) as any
 	}
-
-	return prependSign + `${
-		separateDays && days ? `${days} day${days == 1 ? "" : "s"} ` : ""}${
-		hours || separateDays ? `${separateDays ? hours.padStart(2) : hours}:` : "" }${
-		absMinutes.padStart(2) }:${
-		absSeconds.padStart(2)
-	}`
-}
-
-Number.prototype.asSecondsToVerboseTime = function() {
-	const self = Number(this)
-	const prependSign = self < 0 ? "-" : ""
-	const [ s, m, h = 0 ] = self.asSecondsToTime().split(":").reverse().map(Number).map(Math.abs)
-	return prependSign + (
-		(h ? `${h} h ` : "") +
-		(m ? `${m} min ` : "") +
-		(s ? `${s} sec ` : "")
-	).trim() || "0 sec"
 }

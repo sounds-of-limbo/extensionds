@@ -15,11 +15,11 @@ Useful extensions for basic JS prototypes
         2. [`limit`](#limit)
         3. [`formatThousands`](#formatthousands)
         4. [`pluralize`](#pluralize)
-        5. [`asBytesToVerboseSize`](#asbytestoverbosesize)
-        6. [`asSecondsToTime`](#assecondstotime)
-        7. [`asSecondsToVerboseTime`](#assecondstoverbosetime)
-4. [Helper types](#helper-types)
-    1. [`SizeNames`](#sizenames)
+        5. [`as`](#as)
+4. [Helpers](#helpers)
+    1. [`interface SOLSizeNames`](#interface-solsizenames)
+	2. [`class SOLTime`](#class-soltime)
+	3. [`class SOLSize`](#class-solsize)
 
 ## Installation
 Simply install it using NPM:
@@ -148,62 +148,31 @@ Examples:
 
 ---
 
-#### `asBytesToVerboseSize`
-Treat value as bytes and return verbose siez string up to terabytes (TB)
+#### `as`
+Treat value as a time/size value in specified units and work with it in this context
 ```typescript
-asBytesToVerboseSize(customSizeNames?: SizeNames) => string
+as<T extends SOLTimeUnit | SOLSizeUnit>(unit: T) => T extends SOLTimeUnit ? SOLTime : SOLSize
 ```
 
 Examples:
 ```typescript
-(1024).asBytesToVerboseSize() // => "1 kB"
-(12).asBytesToVerboseSize({ bytes: ["lost byte", "lost bytes"] }) // => "12 lost bytes"
+// Time units
+(90).as("seconds").to("minutes") // => 1.5
+(65.5).as("minutes").toTimeString() // => "1:05:30"
+
+// Size units
+(256).as("bytes").to("kilobytes") // => 0.25
+(1536).as("kilobytes").toVerboseString() // => "1.5 MB"
 ```
 
 | Argument | Type | Required? | Default value | Description |
 | - | - | - | - | - |
-| `customSizeNames` | [`SizeNames`](#sizenames) | - |  | Size names customizations |
+| `unit` | `SOLTimeUnit \| SOLSizeUnit` | **YES** |  | If `unit` is `SOLTimeUnit`, returns [`SOLTime`](#class-soltime)<br>If `unit` is `SOLSizeUnit`, returns [`SOLSize`](#class-solsize) |
 
 ---
+## Helpers
 
-#### `asSecondsToTime`
-Treat value as seconds and return time string
-```typescript
-asSecondsToTime(separateDays?: boolean) => string
-```
-
-Examples:
-```typescript
-(42).asSecondsToTime() // => "00:42"
-(3915).asSecondsToTime() // => "1:05:15"
-(90088).asSecondsToTime() // => "25:01:28"
-(90088).asSecondsToTime(true) // => "1 day 01:01:28
-```
-
-| Argument | Type | Required? | Default value | Description |
-| - | - | - | - | - |
-| `separateDays` | `boolean` | - | `false` | If there is more than 24 hours, whether there should be extra "days" label at the start or not. |
-
----
-
-#### `asSecondsToVerboseTime`
-Treat number as seconds and return verbose time string.
-```typescript
-asSecondsToVerboseTime() => string
-```
-
-Examples:
-```typescript
-(42).asSecondsToTime() // => "42 sec"
-(3915).asSecondsToTime() // => "1 h 5 min 15 sec"
-(90088).asSecondsToTime() // => "25 h 1 min 28 sec"
-```
-
----
-
-## Helper types
-
-### `SizeNames`
+### `interface SOLSizeNames`
 Helper type that allows to specify custom singular and plural forms for specific size name.
 
 ```typescript
@@ -228,5 +197,69 @@ interface SizeNames {
 	 * default is **TB, TB**
 	 */
 	terabytes?: [string, string]
+}
+```
+
+### `class SOLTime`
+Helper class, appears when you use `Number.prototype.as()` with `TimeUnit` as a parameter.
+
+```typescript
+class SOLTime {
+	constructor(
+		value: number,
+		unit: SOLTimeUnit,
+	)
+
+	/**
+	 * Convert time value from current to target time unit
+	 */
+	to: (
+		unit: SOLTimeUnit,
+	) => number
+
+	/**
+	 * Make time string. For example:  
+	 * **00:42**  
+	 * **04:20**  
+	 * **1:15:01**  
+	 */
+	toTimeString: (
+		/**
+		 * If there is more than 24 hours, whether there should be extra 'days' label at the start or not.  
+		 * Default: `false`
+		 */
+		separateDays?: boolean
+	) => string
+}
+```
+
+### `class SOLSize`
+Helper class, appears when you use `Number.prototype.as()` with `SizeUnit` as a parameter.
+
+```typescript
+class SOLSize {
+	constructor(
+		value: number,
+		unit: SOLSizeUnit,
+	)
+
+	/**
+	 * Convert size from current to target size unit
+	 */
+	to: (
+		unit: SOLSizeUnit,
+	) => number
+
+	/**
+	 * Make verbose size string up to terabytes (TB). For example:  
+	 * **921 bytes**  
+	 * **128 kB**  
+	 * **1.2 MB**  
+	 * **12.28 GB**  
+	 * **1.2 TB**  
+	 */
+	toVerboseString: (
+		customSizeNames?: SOLSizeNames
+	) => string
 }
 ```

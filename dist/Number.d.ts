@@ -1,4 +1,4 @@
-interface SizeNames {
+interface SOLSizeNames {
     /**
      * default is **byte, bytes**
      */
@@ -19,6 +19,42 @@ interface SizeNames {
      * default is **TB, TB**
      */
     terabytes?: [string, string];
+}
+declare type SOLTimeUnit = "seconds" | "minutes" | "hours" | "days";
+declare class SOLTime {
+    private unitMultipliers;
+    private seconds;
+    constructor(value: number, unit: SOLTimeUnit);
+    /**
+     * Convert time value from current to target time unit
+     */
+    to: (unit: SOLTimeUnit) => number;
+    /**
+     * Make time string. For example:
+     * **00:42**
+     * **04:20**
+     * **1:15:01**
+     */
+    toTimeString: (separateDays?: boolean) => string;
+}
+declare type SOLSizeUnit = "bytes" | "kilobytes" | "megabytes" | "gigabytes" | "terabytes";
+declare class SOLSize {
+    private unitMultipliers;
+    private bytes;
+    constructor(value: number, unit: SOLSizeUnit);
+    /**
+     * Convert size from current to target size unit
+     */
+    to: (unit: SOLSizeUnit) => number;
+    /**
+     * Make verbose size string up to terabytes (TB). For example:
+     * **921 bytes**
+     * **128 kB**
+     * **1.2 MB**
+     * **12.28 GB**
+     * **1.2 TB**
+     */
+    toVerboseString: (customSizeNames?: SOLSizeNames) => string;
 }
 interface Number {
     /**
@@ -50,35 +86,5 @@ interface Number {
      * Default: -1,
      */
     toFixed?: number) => string;
-    /**
-     * Treat number as bytes and return verbose size string up to terabytes (TB).
-     * For example:
-     * **921 bytes**
-     * **128 kB**
-     * **1.2 MB**
-     * **12.28 GB**
-     * **1.2 TB**
-     */
-    asBytesToVerboseSize: (customSizeNames?: SizeNames) => string;
-    /**
-     * Treat number as seconds and return time string.
-     * For example:
-     * **00:42**
-     * **04:20**
-     * **1:15:01**
-     */
-    asSecondsToTime: (
-    /**
-     * If there is more than 24 hours, whether there should be extra 'days' label at the start or not.
-     * Default: `false`
-     */
-    separateDays?: boolean) => string;
-    /**
-     * Treat number as seconds and return verbose time string.
-     * For example:
-     * **42 sec**
-     * **4 min 20 sec**
-     * **1 h 15 min 1 sec**
-     */
-    asSecondsToVerboseTime: () => string;
+    as: <T extends SOLTimeUnit | SOLSizeUnit>(unit: T) => T extends SOLTimeUnit ? SOLTime : SOLSize;
 }
