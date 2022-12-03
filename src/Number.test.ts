@@ -3,6 +3,9 @@ import * as should from "should"
 import "mocha"
 import "./Number"
 
+import { SOLTimeUnit } from "./helpers/time"
+import { SOLSizeNames, SOLSizeUnit } from "./helpers/size"
+
 describe("Prototype extensions: Number", () => {
 	describe("padStart()", () => {
 		const tests: {

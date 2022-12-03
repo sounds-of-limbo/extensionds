@@ -1,6 +1,9 @@
-declare type CustomLog = "say" | "nfo" | "ok" | "hey" | "no";
+export {};
+import { CustomLog, CustomLogFunction } from "./standalone/Console";
 declare type CustomConsole = {
-    [key in CustomLog]: (message: string, ...params: Array<any>) => void;
+    [key in CustomLog]: CustomLogFunction;
 };
-interface Console extends CustomConsole {
+declare global {
+    interface Console extends CustomConsole {
+    }
 }
